@@ -41,6 +41,8 @@ publishing {
     }
 }
 
+
+
 publish {
     finalizedBy 'sendMail' // Reference the task by its name
     finalizedBy 'postBuiltSucceedToSlack' // Assuming this is also a valid task
