@@ -55,8 +55,8 @@ publishing {
         maven {
             url 'https://mymavenrepo.com/repo/EFQiRObxaJciRlpHMRDp/'
             credentials {
-                username = System.getenv('username')
-                password = System.getenv('password')
+                username = 'myMavenRepo' //
+                password = 'myMavenRepoWritePassword' //
             }
         }
     }
