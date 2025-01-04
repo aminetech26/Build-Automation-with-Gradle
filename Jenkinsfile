@@ -1,4 +1,10 @@
 pipeline {
+
+    environment {
+        SMTP_USER = credentials('jenkins-smtp-user')
+        SMTP_PASS = credentials('jenkins-smtp-pass')
+    }
+
     agent any
 
     stages {
