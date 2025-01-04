@@ -13,6 +13,8 @@ pipeline {
             }
         }
 
+
+
         stage('Test') {
             steps {
                 bat './gradlew.bat clean test'
