@@ -60,7 +60,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: '957281a2-489e-4817-9caa-105ddeb04dc6', usernameVariable: 'MAVEN_REPO_USERNAME', passwordVariable: 'MAVEN_REPO_PASSWORD')]) {
+                    withCredentials([usernamePassword(credentialsId: '957281a2-489e-4817-9caa-105ddeb04dc6', usernameVariable: 'username', passwordVariable: 'password')]) {
                         bat './gradlew.bat publish'
                     }
                 }
