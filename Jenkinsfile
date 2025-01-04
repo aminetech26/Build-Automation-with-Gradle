@@ -68,13 +68,74 @@ pipeline {
         }
     }
 
-    post {
+post {
         success {
-            echo 'Build completed successfully!'
+            script {
+                //
+                emailext (
+                    subject: "Pipeline Successful: ${currentBuild.fullDisplayName}",
+                    body: """
+                        La pipeline s'est terminée avec succès!
+
+                        Détails:
+                        - Projet: ${env.JOB_NAME}
+                        - Build Numéro: ${env.BUILD_NUMBER}
+                        - Status: SUCCESS
+                        - Durée: ${currentBuild.durationString}
+
+                        Voir les détails complets: ${env.BUILD_URL}
+                    """,
+                    recipientProviders: [[$class: 'DevelopersRecipientProvider']],
+                    to: "${EMAIL_RECIPIENTS}"
+                )
+
+                // Slack notification for success
+                slackSend (
+                    color: '#00FF00',
+                    channel: '#tp-gradle',
+                    message: """
+                        :white_check_mark: Pipeline deployée avec succès!
+                        *Projet:* ${env.JOB_NAME}
+                        *Build:* ${env.BUILD_NUMBER}
+                        *Durée:* ${currentBuild.durationString}
+                    """
+                )
+            }
         }
 
         failure {
-            echo 'Build failed. Please check the logs.'
+            script {
+                // Email notification for failure
+                emailext (
+                    subject: "Pipeline Failed: ${currentBuild.fullDisplayName}",
+                    body: """
+                        La pipeline a échoué!
+
+                        Détails:
+                        - Projet: ${env.JOB_NAME}
+                        - Build Numéro: ${env.BUILD_NUMBER}
+                        - Status: FAILURE
+                        - Durée: ${currentBuild.durationString}
+
+                        Voir les logs: ${env.BUILD_URL}console
+                    """,
+                    recipientProviders: [[$class: 'DevelopersRecipientProvider']],
+                    to: "${EMAIL_RECIPIENTS}"
+                )
+
+                // Slack notification for failure
+                slackSend (
+                    color: '#FF0000',
+                    channel: '#tp-gradle',
+                    message: """
+                        :x: Échec de la pipeline!
+                        *Projet:* ${env.JOB_NAME}
+                        *Build:* ${env.BUILD_NUMBER}
+                        *Durée:* ${currentBuild.durationString}
+                        *Voir les logs:* ${env.BUILD_URL}console
+                    """
+                )
+            }
         }
 
         always {
