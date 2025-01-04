@@ -69,82 +69,103 @@ pipeline {
     }
 
 post {
-        success {
-            script {
-                //
-                emailext (
-                    subject: "Pipeline Successful: ${currentBuild.fullDisplayName}",
-                    body: """
-                        La pipeline s'est terminée avec succès!
+    success {
+        script {
+            // Email notification for success
+            emailext (
+                subject: "Pipeline Successful: ${currentBuild.fullDisplayName}",
+                body: """
+                    La pipeline s'est terminée avec succès!
 
-                        Détails:
-                        - Projet: ${env.JOB_NAME}
-                        - Build Numéro: ${env.BUILD_NUMBER}
-                        - Status: SUCCESS
-                        - Durée: ${currentBuild.durationString}
+                    Détails:
+                    - Projet: ${env.JOB_NAME}
+                    - Build Numéro: ${env.BUILD_NUMBER}
+                    - Status: SUCCESS
+                    - Durée: ${currentBuild.durationString}
 
-                        Voir les détails complets: ${env.BUILD_URL}
-                    """,
-                    recipientProviders: [[$class: 'DevelopersRecipientProvider']],
-                    to: "${EMAIL_RECIPIENTS}"
-                )
-
-                // Slack notification for success
-                slackSend (
-                    color: '#00FF00',
-                    channel: '#tp-gradle',
-                    message: """
-                        :white_check_mark: Pipeline deployée avec succès!
-                        *Projet:* ${env.JOB_NAME}
-                        *Build:* ${env.BUILD_NUMBER}
-                        *Durée:* ${currentBuild.durationString}
-                    """
-                )
-            }
-        }
-
-        failure {
-            script {
-                // Email notification for failure
-                emailext (
-                    subject: "Pipeline Failed: ${currentBuild.fullDisplayName}",
-                    body: """
-                        La pipeline a échoué!
-
-                        Détails:
-                        - Projet: ${env.JOB_NAME}
-                        - Build Numéro: ${env.BUILD_NUMBER}
-                        - Status: FAILURE
-                        - Durée: ${currentBuild.durationString}
-
-                        Voir les logs: ${env.BUILD_URL}console
-                    """,
-                    recipientProviders: [[$class: 'DevelopersRecipientProvider']],
-                    to: "${EMAIL_RECIPIENTS}"
-                )
-
-                // Slack notification for failure
-                slackSend (
-                    color: '#FF0000',
-                    channel: '#tp-gradle',
-                    message: """
-                        :x: Échec de la pipeline!
-                        *Projet:* ${env.JOB_NAME}
-                        *Build:* ${env.BUILD_NUMBER}
-                        *Durée:* ${currentBuild.durationString}
-                        *Voir les logs:* ${env.BUILD_URL}console
-                    """
-                )
-            }
-        }
-
-        always {
-            jacoco(
-                execPattern: '**/build/jacoco/*.exec',
-                classPattern: '**/build/classes/java/main',
-                sourcePattern: '**/src/main/java'
+                    Voir les détails complets: ${env.BUILD_URL}
+                """,
+                to: "amine.fewd@gmail.com",
+                from: "la_guerraiche@esi.dz",
+                mimeType: 'text/html',
+                attachLog: false,
+                compressLog: false,
+                configuredTriggers: [
+                    [
+                        $class: 'BuildSuccessTrigger',
+                        sendToRecipientList: true,
+                        sendToDevelopers: true,
+                        sendToRequester: true,
+                        includeTestSummary: true
+                    ]
+                ]
             )
-            cleanWs()
+
+            slackSend (
+                color: '#00FF00',
+                channel: '#tp-gradle',
+                message: """
+                    :white_check_mark: Pipeline deployée avec succès!
+                    *Projet:* ${env.JOB_NAME}
+                    *Build:* ${env.BUILD_NUMBER}
+                    *Durée:* ${currentBuild.durationString}
+                """
+            )
         }
     }
-}
+
+    failure {
+        script {
+            // Email notification for failure
+            emailext (
+                subject: "Pipeline Failed: ${currentBuild.fullDisplayName}",
+                body: """
+                    La pipeline a échoué!
+
+                    Détails:
+                    - Projet: ${env.JOB_NAME}
+                    - Build Numéro: ${env.BUILD_NUMBER}
+                    - Status: FAILURE
+                    - Durée: ${currentBuild.durationString}
+
+                    Voir les logs: ${env.BUILD_URL}console
+                """,
+                to: "amine.fewd@gmail.com",
+                from: "la_guerraiche@esi.dz",
+                mimeType: 'text/html',
+                attachLog: true,
+                compressLog: true,
+                configuredTriggers: [
+                    [
+                        $class: 'BuildFailureTrigger',
+                        sendToRecipientList: true,
+                        sendToDevelopers: true,
+                        sendToRequester: true,
+                        includeTestSummary: true
+                    ]
+                ]
+            )
+
+            slackSend (
+                color: '#FF0000',
+                channel: '#tp-gradle',
+                message: """
+                    :x: Échec de la pipeline!
+                    *Projet:* ${env.JOB_NAME}
+                    *Build:* ${env.BUILD_NUMBER}
+                    *Durée:* ${currentBuild.durationString}
+                    *Voir les logs:* ${env.BUILD_URL}console
+                """
+            )
+        }
+    }
+
+    always {
+        jacoco(
+            execPattern: '**/build/jacoco/*.exec',
+            classPattern: '**/build/classes/java/main',
+            sourcePattern: '**/src/main/java'
+        )
+        cleanWs()
+    }
+}}
