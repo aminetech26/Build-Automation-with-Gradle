@@ -56,6 +56,13 @@ pipeline {
                 ].join(','), fingerprint: true
             }
         }
+
+        stage('Deploy') {
+            steps {
+                bat './gradlew.bat publish'
+            }
+        }
+
     }
 
     post {
