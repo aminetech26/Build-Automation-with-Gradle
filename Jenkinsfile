@@ -18,10 +18,16 @@ pipeline {
         }
 
         stage('Code Analysis') {
+            environment {
+                SONAR_HOST_URL = 'http://197.140.142.82:9000'
+            }
             steps {
-                // Run SonarQube analysis
-                withSonarQubeEnv('sonarqube') {  // Added installation name
-                    bat './gradlew.bat sonarqube'
+                withSonarQubeEnv('sonarqube') {
+                    bat """
+                        ./gradlew.bat sonarqube \
+                        -Dsonar.host.url=${SONAR_HOST_URL} \
+                        -Dsonar.gradle.skipCompile=true
+                    """
                 }
             }
         }
