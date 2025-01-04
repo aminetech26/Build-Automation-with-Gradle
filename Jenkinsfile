@@ -1,11 +1,10 @@
 pipeline {
+    agent any
 
     environment {
         SMTP_USER = credentials('jenkins-smtp-user')
         SMTP_PASS = credentials('jenkins-smtp-pass')
     }
-
-    agent any
 
     stages {
         stage('Compile') {
@@ -18,9 +17,17 @@ pipeline {
             steps {
                 bat './gradlew.bat clean test'
                 junit '**/build/test-results/test/*.xml'
-                cucumber buildStatus: 'UNSTABLE',
-                        fileIncludePattern: '**/cucumber.json',
-                        jsonReportDirectory: 'build/reports/cucumber'
+                cucumber(
+                    fileIncludePattern: '**/cucumber.json',
+                    jsonReportDirectory: 'build/reports/cucumber'
+                )
+                script {
+                    // Vérifier si des tests Cucumber ont échoué
+                    def cucumberReports = findFiles(glob: '**/build/reports/cucumber/cucumber.json')
+                    if (cucumberReports.length == 0) {
+                        error "Aucun rapport Cucumber trouvé. Les tests ont peut-être échoué."
+                    }
+                }
             }
         }
 
@@ -74,163 +81,145 @@ pipeline {
         }
     }
 
-post {
-    success {
-        script {
-            echo "Starting success notifications..."
+    post {
+        success {
+            script {
+                echo "Starting success notifications..."
 
-            // Email notification for success
+                // Email notification for success
+                try {
+                    echo "Attempting to send success email..."
+                    emailext (
+                        subject: "Pipeline Successful: ${currentBuild.fullDisplayName}",
+                        body: """
+                            La pipeline s'est terminée avec succès!
+
+                            Détails:
+                            - Projet: ${env.JOB_NAME}
+                            - Build Numéro: ${env.BUILD_NUMBER}
+                            - Status: SUCCESS
+                            - Durée: ${currentBuild.durationString}
+
+                            Debug Info:
+                            - SMTP User: ${SMTP_USER}
+                            - From: la_guerraiche@esi.dz
+                            - To: amine.fewd@gmail.com
+                            - Time: ${new Date().format("yyyy-MM-dd HH:mm:ss")}
+
+                            Voir les détails complets: ${env.BUILD_URL}
+                        """,
+                        to: "amine.fewd@gmail.com",
+                        from: "la_guerraiche@esi.dz",
+                        mimeType: 'text/html',
+                        attachLog: false,
+                        compressLog: false
+                    )
+                    echo "Success email sent successfully"
+                } catch (e) {
+                    echo "Failed to send success email: ${e.getMessage()}"
+                    e.printStackTrace()
+                }
+
+                // Slack notification for success
+                try {
+                    echo "Attempting to send Slack success message..."
+                    slackSend (
+                        color: '#00FF00',
+                        channel: '#tp-gradle',
+                        message: """
+                            :white_check_mark: Pipeline deployée avec succès!
+                            *Projet:* ${env.JOB_NAME}
+                            *Build:* ${env.BUILD_NUMBER}
+                            *Durée:* ${currentBuild.durationString}
+                        """
+                    )
+                    echo "Slack success message sent successfully"
+                } catch (e) {
+                    echo "Failed to send Slack success message: ${e.getMessage()}"
+                    e.printStackTrace()
+                }
+            }
+        }
+
+        failure {
+            script {
+                echo "Starting failure notifications..."
+
+                // Email notification for failure
+                try {
+                    echo "Attempting to send failure email..."
+                    emailext (
+                        subject: "Pipeline Failed: ${currentBuild.fullDisplayName}",
+                        body: """
+                            La pipeline a échoué!
+
+                            Détails:
+                            - Projet: ${env.JOB_NAME}
+                            - Build Numéro: ${env.BUILD_NUMBER}
+                            - Status: FAILURE
+                            - Durée: ${currentBuild.durationString}
+
+                            Debug Info:
+                            - SMTP User: ${SMTP_USER}
+                            - From: la_guerraiche@esi.dz
+                            - To: amine.fewd@gmail.com
+                            - Time: ${new Date().format("yyyy-MM-dd HH:mm:ss")}
+
+                            Voir les logs: ${env.BUILD_URL}console
+                        """,
+                        to: "amine.fewd@gmail.com",
+                        from: "la_guerraiche@esi.dz",
+                        mimeType: 'text/html',
+                        attachLog: true,
+                        compressLog: true
+                    )
+                    echo "Failure email sent successfully"
+                } catch (e) {
+                    echo "Failed to send failure email: ${e.getMessage()}"
+                    e.printStackTrace()
+                }
+
+                // Slack notification for failure
+                try {
+                    echo "Attempting to send Slack failure message..."
+                    slackSend (
+                        color: '#FF0000',
+                        channel: '#tp-gradle',
+                        message: """
+                            :x: Échec de la pipeline!
+                            *Projet:* ${env.JOB_NAME}
+                            *Build:* ${env.BUILD_NUMBER}
+                            *Durée:* ${currentBuild.durationString}
+                            *Voir les logs:* ${env.BUILD_URL}console
+                        """
+                    )
+                    echo "Slack failure message sent successfully"
+                } catch (e) {
+                    echo "Failed to send Slack failure message: ${e.getMessage()}"
+                    e.printStackTrace()
+                }
+            }
+        }
+
+        always {
+            echo "Executing always block..."
             try {
-                echo "Attempting to send success email..."
-                emailext (
-                    subject: "Pipeline Successful: ${currentBuild.fullDisplayName}",
-                    body: """
-                        La pipeline s'est terminée avec succès!
-
-                        Détails:
-                        - Projet: ${env.JOB_NAME}
-                        - Build Numéro: ${env.BUILD_NUMBER}
-                        - Status: SUCCESS
-                        - Durée: ${currentBuild.durationString}
-
-                        Debug Info:
-                        - SMTP User: ${SMTP_USER}
-                        - From: la_guerraiche@esi.dz
-                        - To: amine.fewd@gmail.com
-                        - Time: ${new Date().format("yyyy-MM-dd HH:mm:ss")}
-
-                        Voir les détails complets: ${env.BUILD_URL}
-                    """,
-                    to: "amine.fewd@gmail.com",
-                    from: "la_guerraiche@esi.dz",
-                    mimeType: 'text/html',
-                    attachLog: false,
-                    compressLog: false,
-                    configuredTriggers: [
-                        [
-                            $class: 'BuildSuccessTrigger',
-                            sendToRecipientList: true,
-                            sendToDevelopers: true,
-                            sendToRequester: true,
-                            includeTestSummary: true
-                        ]
-                    ]
+                jacoco(
+                    execPattern: '**/build/jacoco/*.exec',
+                    classPattern: '**/build/classes/java/main',
+                    sourcePattern: '**/src/main/java'
                 )
-                echo "Success email sent successfully"
+                echo "JaCoCo report generated successfully"
             } catch (e) {
-                echo "Failed to send success email: ${e.getMessage()}"
-                e.printStackTrace()
+                echo "Failed to generate JaCoCo report: ${e.getMessage()}"
             }
 
-            // Slack notification for success
             try {
-                echo "Attempting to send Slack success message..."
-                slackSend (
-                    color: '#00FF00',
-                    channel: '#tp-gradle',
-                    message: """
-                        :white_check_mark: Pipeline deployée avec succès!
-                        *Projet:* ${env.JOB_NAME}
-                        *Build:* ${env.BUILD_NUMBER}
-                        *Durée:* ${currentBuild.durationString}
-                    """
-                )
-                echo "Slack success message sent successfully"
+                cleanWs()
+                echo "Workspace cleaned successfully"
             } catch (e) {
-                echo "Failed to send Slack success message: ${e.getMessage()}"
-                e.printStackTrace()
+                echo "Failed to clean workspace: ${e.getMessage()}"
             }
         }
     }
-
-    failure {
-        script {
-            echo "Starting failure notifications..."
-
-            // Email notification for failure
-            try {
-                echo "Attempting to send failure email..."
-                emailext (
-                    subject: "Pipeline Failed: ${currentBuild.fullDisplayName}",
-                    body: """
-                        La pipeline a échoué!
-
-                        Détails:
-                        - Projet: ${env.JOB_NAME}
-                        - Build Numéro: ${env.BUILD_NUMBER}
-                        - Status: FAILURE
-                        - Durée: ${currentBuild.durationString}
-
-                        Debug Info:
-                        - SMTP User: ${SMTP_USER}
-                        - From: la_guerraiche@esi.dz
-                        - To: amine.fewd@gmail.com
-                        - Time: ${new Date().format("yyyy-MM-dd HH:mm:ss")}
-
-                        Voir les logs: ${env.BUILD_URL}console
-                    """,
-                    to: "amine.fewd@gmail.com",
-                    from: "la_guerraiche@esi.dz",
-                    mimeType: 'text/html',
-                    attachLog: true,
-                    compressLog: true,
-                    configuredTriggers: [
-                        [
-                            $class: 'BuildFailureTrigger',
-                            sendToRecipientList: true,
-                            sendToDevelopers: true,
-                            sendToRequester: true,
-                            includeTestSummary: true
-                        ]
-                    ]
-                )
-                echo "Failure email sent successfully"
-            } catch (e) {
-                echo "Failed to send failure email: ${e.getMessage()}"
-                e.printStackTrace()
-            }
-
-            // Slack notification for failure
-            try {
-                echo "Attempting to send Slack failure message..."
-                slackSend (
-                    color: '#FF0000',
-                    channel: '#tp-gradle',
-                    message: """
-                        :x: Échec de la pipeline!
-                        *Projet:* ${env.JOB_NAME}
-                        *Build:* ${env.BUILD_NUMBER}
-                        *Durée:* ${currentBuild.durationString}
-                        *Voir les logs:* ${env.BUILD_URL}console
-                    """
-                )
-                echo "Slack failure message sent successfully"
-            } catch (e) {
-                echo "Failed to send Slack failure message: ${e.getMessage()}"
-                e.printStackTrace()
-            }
-        }
-    }
-
-    always {
-        echo "Executing always block..."
-        try {
-            jacoco(
-                execPattern: '**/build/jacoco/*.exec',
-                classPattern: '**/build/classes/java/main',
-                sourcePattern: '**/src/main/java'
-            )
-            echo "JaCoCo report generated successfully"
-        } catch (e) {
-            echo "Failed to generate JaCoCo report: ${e.getMessage()}"
-        }
-
-        try {
-            cleanWs()
-            echo "Workspace cleaned successfully"
-        } catch (e) {
-            echo "Failed to clean workspace: ${e.getMessage()}"
-        }
-    }
-}
 }
