@@ -73,109 +73,103 @@ pipeline {
             }
         }
     }
+post {
+    success {
+        echo "Starting success notifications..."
+        script {
+            // Email notification for success
+            try {
+                echo "Attempting to send success email..."
+                emailext(
+                    subject: "Pipeline Successful: ${currentBuild.fullDisplayName}",
+                    body: """
+                        La pipeline s'est terminée avec succès!
+                        Détails:
+                        - Projet: ${env.JOB_NAME}
+                        - Build Numéro: ${env.BUILD_NUMBER}
+                        - Status: SUCCESS
+                        - Durée: ${currentBuild.durationString}
+                    """,
+                    to: "amine.fewd@gmail.com",
+                    from: "la_guerraiche@esi.dz",
+                    mimeType: 'text/html'
+                )
+                echo "Success email sent successfully"
+            } catch (Exception e) {
+                echo "Failed to send success email: ${e.getMessage()}"
+            }
 
-    post {
-        success {
-            script {
-                echo "Starting success notifications..."
-
-                // Email notification for success
-                try {
-                    echo "Attempting to send success email..."
-                    emailext (
-                        subject: "Pipeline Successful: ${currentBuild.fullDisplayName}",
-                        body: """
-                            La pipeline s'est terminée avec succès!
-                            Détails:
-                            - Projet: ${env.JOB_NAME}
-                            - Build Numéro: ${env.BUILD_NUMBER}
-                            - Status: SUCCESS
-                            - Durée: ${currentBuild.durationString}
-                        """,
-                        to: "amine.fewd@gmail.com",
-                        from: "la_guerraiche@esi.dz",
-                        mimeType: 'text/html'
-                    )
-                    echo "Success email sent successfully"
-                } catch (e) {
-                    echo "Failed to send success email: ${e.getMessage()}"
-                    e.printStackTrace()
-                }
-
-                // Slack notification for success
-                try {
-                    echo "Attempting to send Slack success message..."
-                    slackSend (
-                        color: '#00FF00',
-                        channel: '#tp-gradle',
-                        message: """
-                            :white_check_mark: Pipeline deployée avec succès!
-                            *Projet:* ${env.JOB_NAME}
-                            *Build:* ${env.BUILD_NUMBER}
-                            *Durée:* ${currentBuild.durationString}
-                        """
-                    )
-                    echo "Slack success message sent successfully"
-                } catch (e) {
-                    echo "Failed to send Slack success message: ${e.getMessage()}"
-                    e.printStackTrace()
-                }
+            // Slack notification for success
+            try {
+                echo "Attempting to send Slack success message..."
+                slackSend(
+                    color: '#00FF00',
+                    channel: '#tp-gradle',
+                    message: """
+                        :white_check_mark: Pipeline deployée avec succès!
+                        *Projet:* ${env.JOB_NAME}
+                        *Build:* ${env.BUILD_NUMBER}
+                        *Durée:* ${currentBuild.durationString}
+                    """
+                )
+                echo "Slack success message sent successfully"
+            } catch (Exception e) {
+                echo "Failed to send Slack success message: ${e.getMessage()}"
             }
         }
+    }
 
-        failure {
-            script {
-                echo "Starting failure notifications..."
+    failure {
+        echo "Starting failure notifications..."
+        script {
+            // Email notification for failure
+            try {
+                echo "Attempting to send failure email..."
+                emailext(
+                    subject: "Pipeline Failed: ${currentBuild.fullDisplayName}",
+                    body: """
+                        La pipeline a échoué!
+                        Détails:
+                        - Projet: ${env.JOB_NAME}
+                        - Build Numéro: ${env.BUILD_NUMBER}
+                        - Status: FAILURE
+                        - Durée: ${currentBuild.durationString}
+                    """,
+                    to: "amine.fewd@gmail.com",
+                    from: "la_guerraiche@esi.dz",
+                    mimeType: 'text/html',
+                    attachLog: true,
+                    compressLog: true
+                )
+                echo "Failure email sent successfully"
+            } catch (Exception e) {
+                echo "Failed to send failure email: ${e.getMessage()}"
+            }
 
-                // Email notification for failure
-                try {
-                    echo "Attempting to send failure email..."
-                    emailext (
-                        subject: "Pipeline Failed: ${currentBuild.fullDisplayName}",
-                        body: """
-                            La pipeline a échoué!
-                            Détails:
-                            - Projet: ${env.JOB_NAME}
-                            - Build Numéro: ${env.BUILD_NUMBER}
-                            - Status: FAILURE
-                            - Durée: ${currentBuild.durationString}
-                        """,
-                        to: "amine.fewd@gmail.com",
-                        from: "la_guerraiche@esi.dz",
-                        mimeType: 'text/html',
-                        attachLog: true,
-                        compressLog: true
-                    )
-                    echo "Failure email sent successfully"
-                } catch (e) {
-                    echo "Failed to send failure email: ${e.getMessage()}"
-                    e.printStackTrace()
-                }
-
-                // Slack notification for failure
-                try {
-                    echo "Attempting to send Slack failure message..."
-                    slackSend (
-                        color: '#FF0000',
-                        channel: '#tp-gradle',
-                        message: """
-                            :x: Échec de la pipeline!
-                            *Projet:* ${env.JOB_NAME}
-                            *Build:* ${env.BUILD_NUMBER}
-                            *Durée:* ${currentBuild.durationString}
-                            *Voir les logs:* ${env.BUILD_URL}console
-                        """
-                    )
-                    echo "Slack failure message sent successfully"
-                } catch (e) {
-                    echo "Failed to send Slack failure message: ${e.getMessage()}"
-                    e.printStackTrace()
-                }
+            // Slack notification for failure
+            try {
+                echo "Attempting to send Slack failure message..."
+                slackSend(
+                    color: '#FF0000',
+                    channel: '#tp-gradle',
+                    message: """
+                        :x: Échec de la pipeline!
+                        *Projet:* ${env.JOB_NAME}
+                        *Build:* ${env.BUILD_NUMBER}
+                        *Durée:* ${currentBuild.durationString}
+                        *Voir les logs:* ${env.BUILD_URL}console
+                    """
+                )
+                echo "Slack failure message sent successfully"
+            } catch (Exception e) {
+                echo "Failed to send Slack failure message: ${e.getMessage()}"
             }
         }
+    }
 
-        always {
-            echo "Executing always block..."
+    always {
+        echo "Executing always block..."
+        script {
             try {
                 jacoco(
                     execPattern: '**/build/jacoco/*.exec',
@@ -183,14 +177,14 @@ pipeline {
                     sourcePattern: '**/src/main/java'
                 )
                 echo "JaCoCo report generated successfully"
-            } catch (e) {
+            } catch (Exception e) {
                 echo "Failed to generate JaCoCo report: ${e.getMessage()}"
             }
 
             try {
                 cleanWs()
                 echo "Workspace cleaned successfully"
-            } catch (e) {
+            } catch (Exception e) {
                 echo "Failed to clean workspace: ${e.getMessage()}"
             }
         }
