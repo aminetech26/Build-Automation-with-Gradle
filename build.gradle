@@ -37,7 +37,7 @@ sonarqube {
 
 jacocoTestReport {
     reports {
-        xml.required = true // Required for SonarQube
+        xml.required = true
     }
 }
 
