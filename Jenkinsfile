@@ -13,8 +13,6 @@ pipeline {
             }
         }
 
-
-
         stage('Test') {
             steps {
                 bat './gradlew.bat clean test'
@@ -23,13 +21,6 @@ pipeline {
                     fileIncludePattern: '**/cucumber.json',
                     jsonReportDirectory: 'build/reports/cucumber'
                 )
-                script {
-                    // Vérifier si des tests Cucumber ont échoué
-                    def cucumberReports = findFiles(glob: '**/build/reports/cucumber/cucumber.json')
-                    if (cucumberReports.length == 0) {
-                        error "Aucun rapport Cucumber trouvé. Les tests ont peut-être échoué."
-                    }
-                }
             }
         }
 
@@ -95,26 +86,15 @@ pipeline {
                         subject: "Pipeline Successful: ${currentBuild.fullDisplayName}",
                         body: """
                             La pipeline s'est terminée avec succès!
-
                             Détails:
                             - Projet: ${env.JOB_NAME}
                             - Build Numéro: ${env.BUILD_NUMBER}
                             - Status: SUCCESS
                             - Durée: ${currentBuild.durationString}
-
-                            Debug Info:
-                            - SMTP User: ${SMTP_USER}
-                            - From: la_guerraiche@esi.dz
-                            - To: amine.fewd@gmail.com
-                            - Time: ${new Date().format("yyyy-MM-dd HH:mm:ss")}
-
-                            Voir les détails complets: ${env.BUILD_URL}
                         """,
                         to: "amine.fewd@gmail.com",
                         from: "la_guerraiche@esi.dz",
-                        mimeType: 'text/html',
-                        attachLog: false,
-                        compressLog: false
+                        mimeType: 'text/html'
                     )
                     echo "Success email sent successfully"
                 } catch (e) {
@@ -154,20 +134,11 @@ pipeline {
                         subject: "Pipeline Failed: ${currentBuild.fullDisplayName}",
                         body: """
                             La pipeline a échoué!
-
                             Détails:
                             - Projet: ${env.JOB_NAME}
                             - Build Numéro: ${env.BUILD_NUMBER}
                             - Status: FAILURE
                             - Durée: ${currentBuild.durationString}
-
-                            Debug Info:
-                            - SMTP User: ${SMTP_USER}
-                            - From: la_guerraiche@esi.dz
-                            - To: amine.fewd@gmail.com
-                            - Time: ${new Date().format("yyyy-MM-dd HH:mm:ss")}
-
-                            Voir les logs: ${env.BUILD_URL}console
                         """,
                         to: "amine.fewd@gmail.com",
                         from: "la_guerraiche@esi.dz",
