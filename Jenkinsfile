@@ -63,8 +63,7 @@ pipeline {
                         bat './gradlew.bat publish'
                     }
                 }
-        }
-    }
+            }
 
     post {
         success {
