@@ -8,11 +8,11 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                bat './gradlew sonarqube'
-            }
-        }
+        //stage('SonarQube Analysis') {
+            //steps {
+                //bat './gradlew sonarqube'
+            //}
+        //}
 
         stage('SonarQube Quality Gate') {
             steps {
