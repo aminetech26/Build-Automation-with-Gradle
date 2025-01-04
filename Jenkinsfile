@@ -58,12 +58,15 @@ pipeline {
         }
 
         stage('Deploy') {
-                    steps {
-                        // Plus besoin de withCredentials, car les credentials sont statiques dans build.gradle
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: '5ff6be52-9749-404b-b6ea-a1f8d9654e3c', usernameVariable: 'username', passwordVariable: 'password')]) {
                         bat './gradlew.bat publish'
                     }
                 }
             }
+        }
+    }
 
     post {
         success {
