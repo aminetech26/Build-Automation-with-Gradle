@@ -57,18 +57,15 @@ pipeline {
             }
         }
 
-        stages {
-                stage('Deploy') {
-                    steps {
-                        script {
-                            withCredentials([usernamePassword(credentialsId: '957281a2-489e-4817-9caa-105ddeb04dc6', usernameVariable: 'MAVEN_REPO_USERNAME', passwordVariable: 'MAVEN_REPO_PASSWORD')]) {
-                                bat './gradlew.bat publish'
-                            }
-                        }
+        stage('Deploy') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: '957281a2-489e-4817-9caa-105ddeb04dc6', usernameVariable: 'MAVEN_REPO_USERNAME', passwordVariable: 'MAVEN_REPO_PASSWORD')]) {
+                        bat './gradlew.bat publish'
                     }
                 }
             }
-
+        }
     }
 
     post {
