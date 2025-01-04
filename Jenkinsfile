@@ -4,13 +4,8 @@ pipeline {
     stages {
         stage('Test') {
             steps {
-                // Run unit tests
                 bat './gradlew.bat test'
-
-                // Archive test results
                 junit '**/build/test-results/test/*.xml'
-
-                // Generate and archive Cucumber reports
                 cucumber buildStatus: 'UNSTABLE',
                         fileIncludePattern: '**/cucumber.json',
                         jsonReportDirectory: 'build/reports/cucumber'
@@ -35,7 +30,6 @@ pipeline {
         stage('Quality Gate') {
             steps {
                 script {
-                    // Wait for quality gate result
                     timeout(time: 1, unit: 'HOURS') {
                         def qualityGate = waitForQualityGate()
                         if (qualityGate.status != 'OK') {
@@ -48,13 +42,8 @@ pipeline {
 
         stage('Build') {
             steps {
-                // Generate JAR file
                 bat './gradlew.bat clean build'
-
-                // Generate documentation (assuming you're using Javadoc)
                 bat './gradlew.bat javadoc'
-
-                // Archive artifacts
                 archiveArtifacts artifacts: [
                     '**/build/libs/*.jar',
                     '**/build/docs/**'
@@ -73,14 +62,11 @@ pipeline {
         }
 
         always {
-            // Publish JaCoCo coverage report
             jacoco(
                 execPattern: '**/build/jacoco/*.exec',
                 classPattern: '**/build/classes/java/main',
                 sourcePattern: '**/src/main/java'
             )
-
-            // Clean workspace
             cleanWs()
         }
     }
