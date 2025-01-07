@@ -53,14 +53,14 @@ pipeline {
         }
 
         stage('Build') {
-            steps {
-                bat './gradlew.bat clean build'
-                bat './gradlew.bat javadoc'
-                archiveArtifacts artifacts: [
-                    '**/build/libs/*.jar',
-                    '**/build/docs/**'
-                ], fingerprint: true
-            }
+                    steps {
+                        bat './gradlew.bat clean build'
+                        bat './gradlew.bat javadoc'
+                        archiveArtifacts artifacts: [
+                            '**/build/libs/*.jar',
+                            '**/build/docs/**'
+                        ].join(','), fingerprint: true
+                    }
         }
 
         stage('Deploy') {
