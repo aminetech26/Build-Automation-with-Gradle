@@ -91,7 +91,7 @@ pipeline {
 
                          }
 
-                         slackSend channel: '#tp7',
+                         slackSend channel: '#tp-gradle',
                                    color: 'good',
                                    message: "Build ${env.JOB_NAME} #${env.BUILD_NUMBER} completed successfully."
 
