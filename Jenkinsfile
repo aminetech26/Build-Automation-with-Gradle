@@ -75,67 +75,54 @@ pipeline {
     }
 
     post {
-            success {
-                        echo "Starting success notifications..."
-                        emailext(
-                            subject: "Pipeline Successful: ${currentBuild.fullDisplayName}",
-                            body: """
-                                La pipeline s'est terminée avec succès!
-                                Détails:
-                                - Projet: ${env.JOB_NAME}
-                                - Build Numéro: ${env.BUILD_NUMBER}
-                                - Status: SUCCESS
-                                - Durée: ${currentBuild.durationString}
-                            """,
-                            to: "amine.fewd@gmail.com",
-                            from: "la_guerraiche@esi.dz",
-                            mimeType: 'text/html'
-                        )
-                        slackSend(
-                            color: '#00FF00',
-                            channel: '#tp-gradle',
-                            message: """
-                                :white_check_mark: Pipeline deployée avec succès!
-                                *Projet:* ${env.JOB_NAME}
-                                *Build:* ${env.BUILD_NUMBER}
-                                *Durée:* ${currentBuild.durationString}
-                            """
-                        )
-                    }
-
-                    failure {
-                        echo "Starting failure notifications..."
-                        emailext(
-                            subject: "Pipeline Failed: ${currentBuild.fullDisplayName}",
-                            body: """
-                                La pipeline a échoué!
-                                Détails:
-                                - Projet: ${env.JOB_NAME}
-                                - Build Numéro: ${env.BUILD_NUMBER}
-                                - Status: FAILURE
-                                - Durée: ${currentBuild.durationString}
-                            """,
-                            to: "amine.fewd@gmail.com",
-                            from: "la_guerraiche@esi.dz",
-                            mimeType: 'text/html',
-                            attachLog: true,
-                            compressLog: true
-                        )
-                        slackSend(
-                            color: '#FF0000',
-                            channel: '#tp-gradle',
-                            message: """
-                                :x: Échec de la pipeline!
-                                *Projet:* ${env.JOB_NAME}
-                                *Build:* ${env.BUILD_NUMBER}
-                                *Durée:* ${currentBuild.durationString}
-                                *Voir les logs:* ${env.BUILD_URL}console
-                            """
-                        )
-                    }
             always {
                 node('any') {
-                    echo "Executing always block..."
+                    script {
+                        currentBuild.result = currentBuild.result ?: 'SUCCESS'
+                        if (currentBuild.result == 'SUCCESS') {
+                            echo 'Sending success notifications...'
+                            mail to: 'la_guerraiche@esi.dz',
+                                 subject: "Build Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                                 body: """
+                                    The build and deployment for ${env.JOB_NAME} #${env.BUILD_NUMBER} was successful.
+                                    Build URL: ${env.BUILD_URL}
+                                    Duration: ${currentBuild.durationString}
+                                 """
+
+                            slackSend(
+                                color: '#00FF00',
+                                channel: '#tp-gradle',
+                                message: """
+                                    :white_check_mark: Pipeline deployée avec succès!
+                                    *Projet:* ${env.JOB_NAME}
+                                    *Build:* ${env.BUILD_NUMBER}
+                                    *Durée:* ${currentBuild.durationString}
+                                """
+                            )
+                        } else {
+                            echo 'Sending failure notifications...'
+                            mail to: 'la_guerraiche@esi.dz',
+                                 subject: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                                 body: """
+                                    The build for ${env.JOB_NAME} #${env.BUILD_NUMBER} failed.
+                                    Check the logs for details: ${env.BUILD_URL}console
+                                    Duration: ${currentBuild.durationString}
+                                 """
+
+                            slackSend(
+                                color: '#FF0000',
+                                channel: '#tp-gradle',
+                                message: """
+                                    :x: Échec de la pipeline!
+                                    *Projet:* ${env.JOB_NAME}
+                                    *Build:* ${env.BUILD_NUMBER}
+                                    *Durée:* ${currentBuild.durationString}
+                                    *Voir les logs:* ${env.BUILD_URL}console
+                                """
+                            )
+                        }
+                    }
+
                     jacoco(
                         execPattern: '**/build/jacoco/*.exec',
                         classPattern: '**/build/classes/java/main',
