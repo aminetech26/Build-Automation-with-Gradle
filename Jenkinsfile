@@ -136,14 +136,13 @@ pipeline {
 
         always {
             echo "Executing always block..."
-            node {
-                jacoco(
-                    execPattern: '**/build/jacoco/*.exec',
-                    classPattern: '**/build/classes/java/main',
-                    sourcePattern: '**/src/main/java'
-                )
-            }
+            jacoco(
+                execPattern: '**/build/jacoco/*.exec',
+                classPattern: '**/build/classes/java/main',
+                sourcePattern: '**/src/main/java'
+            )
             cleanWs()
         }
+
     }
 }
