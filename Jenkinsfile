@@ -69,29 +69,45 @@ pipeline {
         }
 
         stage('Notifications') {
-                     steps {
-                         script {
-                             currentBuild.result = currentBuild.result ?: 'SUCCESS'
-                             if (currentBuild.result == 'SUCCESS') {
-                                 echo 'Sending success notifications...'
-                                 mail to: 'la_guerraiche@esi.dz',
-                                      subject: "Build Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                                      body: "The build and deployment for ${env.JOB_NAME} #${env.BUILD_NUMBER} was successful."
-                             } else {
-                                 echo 'Sending failure notifications...'
-                                 mail to: 'la_guerraiche@esi.dz',
-                                      subject: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                                      body: "The build for ${env.JOB_NAME} #${env.BUILD_NUMBER} failed. Check the logs for details."
-                             }
+            steps {
+                script {
+                    currentBuild.result = currentBuild.result ?: 'SUCCESS'
 
-                         }
+                    if (currentBuild.result == 'SUCCESS') {
+                        echo 'Sending success notifications...'
+                        mail to: 'la_guerraiche@esi.dz',
+                             subject: "Build Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                             body: "The build and deployment for ${env.JOB_NAME} #${env.BUILD_NUMBER} was successful."
 
-                         slackSend channel: '#tp-gradle',
-                                   color: 'good',
-                                   message: "Build ${env.JOB_NAME} #${env.BUILD_NUMBER} completed successfully."
+                        slackSend channel: '#tp-gradle',
+                                  color: 'good', // Green for success
+                                  message: """
+                                      :white_check_mark: *Build Success!*
+                                      *Project:* ${env.JOB_NAME}
+                                      *Build Number:* ${env.BUILD_NUMBER}
+                                      *Duration:* ${currentBuild.durationString}
+                                      *View Logs:* <${env.BUILD_URL}|Console Output>
+                                  """
+                    } else {
+                        echo 'Sending failure notifications...'
+                        mail to: 'la_guerraiche@esi.dz',
+                             subject: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                             body: "The build for ${env.JOB_NAME} #${env.BUILD_NUMBER} failed. Check the logs for details."
 
-                     }
-                 }
+                        slackSend channel: '#tp-gradle',
+                                  color: 'danger', // Red for failure
+                                  message: """
+                                      :x: *Build Failed!*
+                                      *Project:* ${env.JOB_NAME}
+                                      *Build Number:* ${env.BUILD_NUMBER}
+                                      *Duration:* ${currentBuild.durationString}
+                                      *View Logs:* <${env.BUILD_URL}|Console Output>
+                                  """
+                    }
+                }
+            }
+        }
+
     }
 
     post {
