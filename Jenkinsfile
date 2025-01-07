@@ -7,14 +7,9 @@ pipeline {
     }
 
     stages {
-        stage('Compile') {
-            steps {
-                bat './gradlew.bat compileJava'
-            }
-        }
-
         stage('Test') {
             steps {
+                bat './gradlew.bat compileJava'
                 bat './gradlew.bat clean test'
                 junit '**/build/test-results/test/*.xml'
                 cucumber(
