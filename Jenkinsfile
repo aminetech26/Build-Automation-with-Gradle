@@ -59,7 +59,7 @@ pipeline {
                 archiveArtifacts artifacts: [
                     '**/build/libs/*.jar',
                     '**/build/docs/**'
-                ].join(','), fingerprint: true
+                ], fingerprint: true
             }
         }
 
@@ -136,11 +136,13 @@ pipeline {
 
         always {
             echo "Executing always block..."
-            jacoco(
-                execPattern: '**/build/jacoco/*.exec',
-                classPattern: '**/build/classes/java/main',
-                sourcePattern: '**/src/main/java'
-            )
+            node {
+                jacoco(
+                    execPattern: '**/build/jacoco/*.exec',
+                    classPattern: '**/build/classes/java/main',
+                    sourcePattern: '**/src/main/java'
+                )
+            }
             cleanWs()
         }
     }
