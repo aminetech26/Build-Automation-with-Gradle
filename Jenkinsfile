@@ -72,57 +72,36 @@ pipeline {
                 }
             }
         }
+
+        stage('Notifications') {
+                     steps {
+                         script {
+                             currentBuild.result = currentBuild.result ?: 'SUCCESS'
+                             if (currentBuild.result == 'SUCCESS') {
+                                 echo 'Sending success notifications...'
+                                 mail to: 'la_guerraiche@esi.dz',
+                                      subject: "Build Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                                      body: "The build and deployment for ${env.JOB_NAME} #${env.BUILD_NUMBER} was successful."
+                             } else {
+                                 echo 'Sending failure notifications...'
+                                 mail to: 'la_guerraiche@esi.dz',
+                                      subject: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                                      body: "The build for ${env.JOB_NAME} #${env.BUILD_NUMBER} failed. Check the logs for details."
+                             }
+
+                         }
+
+                         slackSend channel: '#tp7',
+                                   color: 'good',
+                                   message: "Build ${env.JOB_NAME} #${env.BUILD_NUMBER} completed successfully."
+
+                     }
+                 }
     }
 
     post {
             always {
                 node('any') {
-                    script {
-                        currentBuild.result = currentBuild.result ?: 'SUCCESS'
-                        if (currentBuild.result == 'SUCCESS') {
-                            echo 'Sending success notifications...'
-                            mail to: 'la_guerraiche@esi.dz',
-                                 subject: "Build Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                                 body: """
-                                    The build and deployment for ${env.JOB_NAME} #${env.BUILD_NUMBER} was successful.
-                                    Build URL: ${env.BUILD_URL}
-                                    Duration: ${currentBuild.durationString}
-                                 """
-
-                            slackSend(
-                                color: '#00FF00',
-                                channel: '#tp-gradle',
-                                message: """
-                                    :white_check_mark: Pipeline deployée avec succès!
-                                    *Projet:* ${env.JOB_NAME}
-                                    *Build:* ${env.BUILD_NUMBER}
-                                    *Durée:* ${currentBuild.durationString}
-                                """
-                            )
-                        } else {
-                            echo 'Sending failure notifications...'
-                            mail to: 'la_guerraiche@esi.dz',
-                                 subject: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                                 body: """
-                                    The build for ${env.JOB_NAME} #${env.BUILD_NUMBER} failed.
-                                    Check the logs for details: ${env.BUILD_URL}console
-                                    Duration: ${currentBuild.durationString}
-                                 """
-
-                            slackSend(
-                                color: '#FF0000',
-                                channel: '#tp-gradle',
-                                message: """
-                                    :x: Échec de la pipeline!
-                                    *Projet:* ${env.JOB_NAME}
-                                    *Build:* ${env.BUILD_NUMBER}
-                                    *Durée:* ${currentBuild.durationString}
-                                    *Voir les logs:* ${env.BUILD_URL}console
-                                """
-                            )
-                        }
-                    }
-
                     jacoco(
                         execPattern: '**/build/jacoco/*.exec',
                         classPattern: '**/build/classes/java/main',
