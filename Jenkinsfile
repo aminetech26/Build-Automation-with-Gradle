@@ -47,7 +47,6 @@ pipeline {
                         bat './gradlew.bat clean build'
                         bat './gradlew.bat javadoc'
                         archiveArtifacts artifacts: [
-                            '**/cucumber.json'
                             '**/build/libs/*.jar',
                             '**/build/docs/**'
                         ].join(','), fingerprint: true
