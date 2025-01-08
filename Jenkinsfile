@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        SMTP_USER = credentials('jenkins-smtp-user')
-        SMTP_PASS = credentials('jenkins-smtp-pass')
-    }
-
     stages {
         stage('Test') {
             steps {
@@ -80,7 +75,7 @@ pipeline {
                              body: "The build and deployment for ${env.JOB_NAME} #${env.BUILD_NUMBER} was successful."
 
                         slackSend channel: '#tp-gradle',
-                                  color: 'good', // Green for success
+                                  color: 'good',
                                   message: """
                                       :white_check_mark: *Build Success!*
                                       *Project:* ${env.JOB_NAME}
@@ -95,7 +90,7 @@ pipeline {
                              body: "The build for ${env.JOB_NAME} #${env.BUILD_NUMBER} failed. Check the logs for details."
 
                         slackSend channel: '#tp-gradle',
-                                  color: 'danger', // Red for failure
+                                  color: 'danger',
                                   message: """
                                       :x: *Build Failed!*
                                       *Project:* ${env.JOB_NAME}
