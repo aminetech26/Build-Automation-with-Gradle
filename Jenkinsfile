@@ -8,8 +8,8 @@ pipeline {
                 bat './gradlew.bat clean test'
                 junit '**/build/test-results/test/*.xml'
                 cucumber(
-                    fileIncludePattern: '**/cucumber.json',
-                    jsonReportDirectory: 'build/reports/cucumber'
+                    fileIncludePattern: '**/example-report.json',
+                    jsonReportDirectory: 'reports'
                 )
             }
         }
@@ -47,6 +47,7 @@ pipeline {
                         bat './gradlew.bat clean build'
                         bat './gradlew.bat javadoc'
                         archiveArtifacts artifacts: [
+                            '**/cucumber.json'
                             '**/build/libs/*.jar',
                             '**/build/docs/**'
                         ].join(','), fingerprint: true
